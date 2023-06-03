@@ -1,7 +1,8 @@
 import { convertX509PublicKeyToCOSE } from '../helpers/convertX509PublicKeyToCOSE';
 import { isoBase64URL, isoUint8Array } from '../helpers/iso';
-import { COSEALG, COSEKEYS, isCOSEPublicKeyEC2 } from '../helpers/cose';
+import { COSEALG, COSEKEYS, isCOSEPublicKeyEC2, isCOSEPublicKeyRSA } from '../helpers/cose';
 import { verifyEC2 } from '../helpers/iso/isoCrypto/verifyEC2';
+import { verifyRSA } from '../helpers/iso/isoCrypto/verifyRSA';
 
 /**
  * Lightweight verification for FIDO MDS JWTs.
@@ -24,6 +25,14 @@ export async function verifyJWT(jwt: string, leafCert: Uint8Array): Promise<bool
       signature: isoBase64URL.toBuffer(signature),
       cosePublicKey: certCOSE,
       shaHashOverride: COSEALG.ES256,
+    });
+  }
+
+  if (isCOSEPublicKeyRSA(certCOSE)) {
+    return verifyRSA({
+      data: isoUint8Array.fromUTF8String(`${header}.${payload}`),
+      signature: isoBase64URL.toBuffer(signature),
+      cosePublicKey: certCOSE,
     });
   }
 
